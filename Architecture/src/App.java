@@ -1,11 +1,102 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 public class App {
-    public static void main(String[] args) throws Exception {
+    static int currentAddress = 0;
 
-        FileReader.ReadFiles("src/Sample.txt");
+    public static void main(String[] args) {
+        assemble("src/Sample.txt", "src/output.txt");
+    }
 
+    private static void assemble(String inputFileName, String outputFileName) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFileName));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputFileName)))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+
+                if (!line.isEmpty()) {
+                    String[] tokens = line.split("[,\\s]+");
+                    if (tokens[0].equals("LOC")) {
+                        currentAddress = Integer.parseInt(tokens[1]);
+                    } else {
+                        /*
+                         * String opcode = tokens[0];
+                         * int r = Character.getNumericValue(tokens[1].charAt(0));
+                         * int ix = Character.getNumericValue(tokens[1].charAt(1));
+                         * int i = Character.getNumericValue(tokens[1].charAt(2));
+                         * // int addressField = Integer.parseInt(tokens[2]);
+                         * String binaryInstruction = opcodeMap.get(opcode) +
+                         * String.format("%02d", r) +
+                         * String.format("%02d", ix) +
+                         * String.format("%01d", i) +
+                         * String.format("%04d", currentAddress);
+                         * String octalInstruction = binaryToOctal(binaryInstruction);
+                         * writer.write(String.format("%06o\t%s\t%s%n", currentAddress,
+                         * octalInstruction, line));
+                         * currentAddress++;
+                         */
+                        if (tokens[0].equals("Data")) {
+                            String[] instruction = ParseInstruction(tokens);
+                            for (int i = 0; i < 2; i++) {
+                                System.out.println(instruction[i]);
+                                writer.write(instruction[i]);
+                                writer.write("  ");
+                            }
+                            writer.newLine();
+                        }
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String[] ParseInstruction(String[] tokens) {
+        String[] output = new String[2];
+        switch (tokens[0]) {
+            case "Data":
+                String octal;
+                if (tokens[1].equals("End")) {
+                    octal = Integer.toOctalString(1024);
+                } else {
+                    octal = Integer.toOctalString(Integer.parseInt(tokens[1]));
+                }
+
+                String octalAddress = Integer.toOctalString(currentAddress);
+                int strLength = octal.length();
+                String filler = "";
+                String addressFiller = "";
+                for (int i = 0; i < 6 - strLength; i++) {
+                    filler += "0";
+                }
+                for (int i = 0; i < 6 - octalAddress.length(); i++) {
+                    addressFiller += "0";
+                }
+                String instruction = filler + octal;
+                String address = addressFiller + octalAddress;
+                output[0] = address;
+                output[1] = instruction;
+                currentAddress++;
+                break;
+
+            case "LDX":
+
+                break;
+            default:
+                break;
+        }
+        return output;
     }
 
     private static final Map<String, String> opcodeMap = createOpcodeMap();
