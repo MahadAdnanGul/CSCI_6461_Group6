@@ -44,7 +44,7 @@ public class App {
                          * octalInstruction, line));
                          * currentAddress++;
                          */
-                        if (tokens[0].equals("Data")) {
+                        if (tokens[0].equals("Data") || tokens[0].equals("LDX")) {
                             String[] instruction = ParseInstruction(tokens);
                             for (int i = 0; i < 2; i++) {
                                 System.out.println(instruction[i]);
@@ -74,29 +74,47 @@ public class App {
                 }
 
                 String octalAddress = Integer.toOctalString(currentAddress);
-                int strLength = octal.length();
-                String filler = "";
-                String addressFiller = "";
-                for (int i = 0; i < 6 - strLength; i++) {
-                    filler += "0";
-                }
-                for (int i = 0; i < 6 - octalAddress.length(); i++) {
-                    addressFiller += "0";
-                }
-                String instruction = filler + octal;
-                String address = addressFiller + octalAddress;
+
+                String instruction = fillerAdd(octal, 6);
+                String address = fillerAdd(octalAddress, 6);
                 output[0] = address;
                 output[1] = instruction;
                 currentAddress++;
                 break;
 
             case "LDX":
+                String opCode = fillerAdd(Integer.toBinaryString(Integer.parseInt(opcodeMap.get(tokens[0]), 2)), 6);
+                String R = "00";// fillerAdd(Integer.toBinaryString(Integer.parseInt(tokens[1])), 2);
+                String iX = fillerAdd(Integer.toBinaryString(Integer.parseInt(tokens[1])), 2);
+                String i = "0";
+                String add = fillerAdd(Integer.toBinaryString(Integer.parseInt(tokens[2])), 5);
+                String binary = opCode + R + iX + i + add;
+                System.out.println(binary);
 
+                String octal0 = Integer.toOctalString(Integer.parseInt(binary.substring(0, 1), 2));
+                String octal1 = Integer.toOctalString(Integer.parseInt(binary.substring(1, 4), 2));
+                String octal2 = Integer.toOctalString(Integer.parseInt(binary.substring(4, 7), 2));
+                String octal3 = Integer.toOctalString(Integer.parseInt(binary.substring(7, 10), 2));
+                String octal4 = Integer.toOctalString(Integer.parseInt(binary.substring(10, 13), 2));
+                String octal5 = Integer.toOctalString(Integer.parseInt(binary.substring(13, 16), 2));
+                String concat = octal0 + octal1 + octal2 + octal3 + octal4 + octal5;
+                output[0] = fillerAdd(Integer.toOctalString(currentAddress), 6);
+                output[1] = concat;
+                currentAddress++;
                 break;
+
             default:
                 break;
         }
         return output;
+    }
+
+    private static String fillerAdd(String input, int length) {
+        String filler = "";
+        for (int i = 0; i < length - input.length(); i++) {
+            filler += "0";
+        }
+        return filler + input;
     }
 
     private static final Map<String, String> opcodeMap = createOpcodeMap();
@@ -105,7 +123,7 @@ public class App {
         Map<String, String> map = new HashMap<>();
         map.put("LDR", "000001");
         map.put("LDA", "000011");
-        map.put("LDX", "101001");
+        map.put("LDX", "000100");
         map.put("STR", "000010");
         map.put("STX", "101010");
         map.put("JZ", "001010");
